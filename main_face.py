@@ -1,6 +1,7 @@
 from utils_ds.parser import get_config
 from utils_ds.draw import draw_boxes
 from deep_sort import build_tracker
+from training import Training
 
 import argparse
 import os
@@ -33,6 +34,7 @@ class VideoTracker(object):
         self.margin_ratio = args.margin_ratio           # 0.2
         self.frame_interval = args.frame_interval       # frequency
         self.record_attendance = args.record_attendance
+        self.training = args.training
 
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.half = self.device.type != 'cpu'  # half precision only supported on CUDA
@@ -42,8 +44,8 @@ class VideoTracker(object):
             cv2.namedWindow("test", cv2.WINDOW_NORMAL)
             cv2.resizeWindow("test", args.display_width, args.display_height)
 
-        if args.cam != -1:
-            vid = "rtsp://admin:JGPHAN@192.168.0.104:554"
+        if args.cam != "-1":
+            vid = args.cam
             print("Using webcam " + str(args.cam))
             self.vdo = cv2.VideoCapture(vid)
         else:
@@ -63,9 +65,15 @@ class VideoTracker(object):
         if self.device == 'cpu':
             warnings.warn("Running in cpu mode which maybe very slow!", UserWarning)
 
+        # ***************************** initialize Training **********************************
+        if self.training is not None:
+            trainer  = Training(self.deepsort, self.face_detector, self.training, self.scale, self.margin_ratio)
+            trainer.initiate_training()
+        
+
     def __enter__(self):
         # ************************* Load video from camera *************************
-        if self.args.cam != -1:
+        if self.args.cam != "-1":
             print('Camera ...')
             ret, frame = self.vdo.read()
             assert ret, "Error: Camera error"
@@ -116,7 +124,6 @@ class VideoTracker(object):
 
         idx_frame = 0
         last_out = None
-        emp_id = ""
         while self.vdo.grab():
             # Inference *********************************************************************
             t0 = time.time()
@@ -223,6 +230,8 @@ def xyxy2xywh(x):
 
 
 if __name__ == '__main__':
+
+    VIDEO_PATH = "rtsp://admin:JGPHAN@192.168.0.104:554"
     parser = argparse.ArgumentParser()
     # input and output
     parser.add_argument('--input_path', type=str, default='test.mp4', help='source')  # file/folder, 0 for webcam
@@ -237,7 +246,7 @@ if __name__ == '__main__':
     parser.add_argument("--display", action="store_true", default="True")
     parser.add_argument("--display_width", type=int, default=800)
     parser.add_argument("--display_height", type=int, default=600)
-    parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
+    parser.add_argument("--camera", action="store", dest="cam", type=str, default=VIDEO_PATH)
 
     # face detecot parameters
     parser.add_argument("--scale", type=int, default=2)
@@ -246,6 +255,9 @@ if __name__ == '__main__':
 
     # deepsort parameters
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
+
+    # Train face data
+    parser.add_argument("--training", type=str, default=None)
 
 
     args = parser.parse_args()
