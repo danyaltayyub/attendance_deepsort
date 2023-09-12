@@ -162,14 +162,14 @@ class Track:
 
         idx_min=dist_list.index(min(dist_list))
 
-        if dist_list[idx_min] <= 0.4:
+        if dist_list[idx_min] <= 0.45:
             temp_name = self.track_name
             if self.name_list[idx_min] == temp_name:
                 self.name_update=0
                 self.track_name = self.name_list[idx_min]
             else:
                 self.name_update+=1
-                if self.name_update >= 5:
+                if self.name_update >= 4:
                     self.track_name = self.name_list[idx_min]
                     self.name_update = 0
 

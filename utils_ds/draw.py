@@ -23,7 +23,7 @@ def draw_boxes(img, bbox, name, identities=None, offset=(0,0)):
         id = int(identities[i]) if identities is not None else 0    
         color = compute_color_for_labels(id)
         # label = '{}{:d}'.format("", id) edited by me
-        label = str(name[i]) if name is not None else ""
+        label = str(name[i]) if name is not None and name != "Undetected" else ""
         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2 , 2)[0]
         cv2.rectangle(img,(x1, y1),(x2,y2),color,3)
         cv2.rectangle(img,(x1, y1),(x1+t_size[0]+3,y1+t_size[1]+4), color,-1)
