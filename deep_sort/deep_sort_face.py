@@ -14,9 +14,10 @@ __all__ = ['DeepSortFace']
 
 class DeepSortFace(object):
     def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0, max_iou_distance=0.7,
-                 max_age=70, n_init=3, nn_budget=100, use_cuda=True):
+                 max_age=70, n_init=3, nn_budget=100, matching_conf=0.5, use_cuda=True):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
+        self.matching_conf = matching_conf
 
         # ************************* face embedding *************************
         self.extractor = Extractor(use_cuda=use_cuda)
@@ -30,7 +31,7 @@ class DeepSortFace(object):
         metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
 
         # tracker maintain a list contains(self.tracks) for each Track object
-        self.tracker = Tracker(metric, stored_embeddings, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
+        self.tracker = Tracker(metric, stored_embeddings, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init, matching_conf=matching_conf)
 
     def update(self, bbox_xywh, confidences, ori_img):
         # bbox_xywh (#obj,4), [xc,yc, w, h]     bounding box for each person

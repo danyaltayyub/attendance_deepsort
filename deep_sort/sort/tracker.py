@@ -42,12 +42,13 @@ class Tracker:
 
     """
 
-    def __init__(self, metric, stored_embeddings, max_iou_distance=0.7, max_age=70, n_init=3):
+    def __init__(self, metric, stored_embeddings, max_iou_distance=0.7, max_age=70, n_init=3, matching_conf=0.5):
         self.metric = metric
         self.stored_embeddings = stored_embeddings
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
         self.n_init = n_init
+        self.matching_conf = matching_conf
 
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
@@ -180,13 +181,7 @@ class Tracker:
         mean, covariance = self.kf.initiate(detection.to_xyah())    # 根据位置初始化KF
 
 
-        #EDITING BY DANYAL
-        
-
-        #_______ editing till here
-
-
         self.tracks.append(Track(
-            mean, covariance, self._next_id, self.n_init, self.max_age, self.stored_embeddings,
-            detection.feature)) # for new obj, create a new Track object for it
+            mean, covariance, self._next_id, self.n_init, self.max_age, self.stored_embeddings, 
+            self.matching_conf, detection.feature)) # for new obj, create a new Track object for it
         self._next_id += 1

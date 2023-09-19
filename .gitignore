@@ -162,10 +162,12 @@ cython_debug/
 /deepsortenv
 /deep_sort/deep/vggface2.pt
 /output/
+/pictures
 cap_img.py
 captured_image.jpg
 data.pt
 test.mp4
 test2.mp4
+test3.mp4
 att.csv
 employee_ids.csv

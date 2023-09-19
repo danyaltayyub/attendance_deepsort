@@ -128,7 +128,7 @@ class VideoTracker(object):
             # Inference *********************************************************************
             t0 = time.time()
             _, img0 = self.vdo.retrieve()
-            # img0 = cv2.imread("/home/transdata/DeepSORT_Face/saved/Danyal Tayyub/captured_image.jpg")
+            # img0 = cv2.imread("saved/M. Abdullah/0e719f58-08f6-44df-bfe8-462b016c3e67.jpg")
             if idx_frame % self.args.frame_interval == 0:
                 outputs, yt, st, name = self.image_track(img0)        # (#ID, 5) x1,y1,x2,y2,id
                 last_out = outputs
@@ -231,10 +231,13 @@ def xyxy2xywh(x):
 
 if __name__ == '__main__':
 
+    VIDEO_PATH =  "-1"
     VIDEO_PATH = "rtsp://admin:JGPHAN@192.168.0.104:554"
+    TRAINING_FILE = 'data.pt'
+    # TRAINING_FILE = None
     parser = argparse.ArgumentParser()
     # input and output
-    parser.add_argument('--input_path', type=str, default='test.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--input_path', type=str, default='test3.mp4', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--save_path', type=str, default='output/', help='output folder')  # output folder
     parser.add_argument("--frame_interval", type=int, default=1)
     parser.add_argument('--fourcc', type=str, default='mp4v', help='output video codec (verify ffmpeg support)')
@@ -257,7 +260,7 @@ if __name__ == '__main__':
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
 
     # Train face data
-    parser.add_argument("--training", type=str, default=None)
+    parser.add_argument("--training", type=str, default=TRAINING_FILE)
 
 
     args = parser.parse_args()

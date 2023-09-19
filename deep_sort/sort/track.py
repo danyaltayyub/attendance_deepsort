@@ -1,5 +1,5 @@
 # vim: expandtab:ts=4:sw=4
-from .nn_matching import _cosine_distance,_pdist
+from .nn_matching import _cosine_distance
 
 class TrackState:
     """
@@ -64,14 +64,16 @@ class Track:
     """
 
     def __init__(self, mean, covariance, track_id, n_init, max_age, stored_embeddings,
-                 feature=None):
+                 matching_conf ,feature=None):
         #
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
         self.face_data = stored_embeddings[0]
         self.name_list = stored_embeddings[1]
+        self.matching_conf = matching_conf
         self.track_name = ""
+        self.temp_name = ""
         self.hits = 1
         self.age = 1
         self.time_since_update = 0
@@ -152,37 +154,61 @@ class Track:
         self.hits += 1
         self.time_since_update = 0
 
-        dist_list=[]
-
-        for idx, emb_db in enumerate(self.face_data):
-            dist = _cosine_distance(detection.feature.reshape(1,-1) , emb_db.reshape(1,-1))[0][0]
-            dist = round(dist,3)
-            dist_list.append(dist)
-            print (self.name_list[idx], dist)
-
-        idx_min=dist_list.index(min(dist_list))
-
-        if dist_list[idx_min] <= 0.45:
-            temp_name = self.track_name
-            if self.name_list[idx_min] == temp_name:
-                self.name_update=0
-                self.track_name = self.name_list[idx_min]
-            else:
-                self.name_update+=1
-                if self.name_update >= 4:
-                    self.track_name = self.name_list[idx_min]
-                    self.name_update = 0
-
-        else:
-            self.track_name = ("Undetected")
-
-        #_______ editing till here
-
-
 
         if self.state == TrackState.Tentative and self.hits >= self._n_init:
             
             self.state = TrackState.Confirmed
+
+
+        if self.state == TrackState.Confirmed:
+            dist_list=[]
+            new_name = []
+
+            for idx, emb_db in enumerate(self.face_data):
+                dist = _cosine_distance(emb_db.reshape(1,-1), detection.feature.reshape(1,-1) )[0][0]
+                dist = round(dist,3)
+                # print("new nameeeeeeee.....",len(new_name))
+                check = True
+                if len(new_name)!=0:
+                    for idx2, names in enumerate(new_name):
+                        if names == self.name_list[idx]:
+                            dist_list[idx2] = round((dist_list[idx2] + dist)/2.0,3)
+                            check = False
+                            break
+
+                    if check:
+                        new_name.append(self.name_list[idx])
+                        dist_list.append(dist)
+
+
+
+                else:
+                    new_name.append(self.name_list[idx])
+                    dist_list.append(dist)
+                
+
+                # print (self.name_list[idx], dist)
+                # print(self.matching_conf)
+
+            for idx , names in enumerate(new_name):
+                print(new_name[idx], dist_list[idx])
+            idx_min=dist_list.index(min(dist_list))
+
+            if dist_list[idx_min] <= self.matching_conf:
+                if new_name[idx_min] != self.temp_name:
+                    self.name_update=0
+                    self.temp_name = new_name[idx_min]
+                else:
+                    self.name_update+=1
+                    if self.name_update >= 4:
+                        self.track_name = self.temp_name
+                        self.name_update = 0
+
+            else:
+                self.name_update = 0
+                self.track_name = ("Undetected")
+
+        #_______ editing till here
 
     def mark_missed(self):
         """Mark this track as missed (no association at the current time step).
