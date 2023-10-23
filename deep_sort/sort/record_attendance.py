@@ -6,8 +6,8 @@ from datetime import datetime
 
 class RecordAttendance():
     def __init__(self):
-        self.attendance_file = "/home/transdata/DeepSORT_Face/att.csv"
-        self.employee_ids = "/home/transdata/DeepSORT_Face/employee_ids.csv"
+        self.attendance_file = "/home/transdata/attendance_deepsort/att.csv"
+        self.employee_ids = "/home/transdata/attendance_deepsort/employee_ids.csv"
 
         self.api_url = "https://app.inteliviu.com/dev/api/mark-attendance"
 
@@ -29,7 +29,7 @@ class RecordAttendance():
         employee_id = self.get_employee_id(name)
 
         if employee_id is None:
-            print("Employee ID not found")
+            # print("Employee ID not found")
             return
         
         datetime_var = datetime.now()
@@ -64,7 +64,7 @@ class RecordAttendance():
             for row in reader:
                 if row[0] == name:
                     if row [2] == cur_date:
-                        if (self.get_time_int(row[3]) - self.get_time_int(cur_time)) < 300:
+                        if (self.get_time_int(cur_time) - self.get_time_int(row[3])) < 60:
                             check = True
                         else :
                             check = False

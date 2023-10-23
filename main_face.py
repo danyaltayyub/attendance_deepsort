@@ -27,7 +27,7 @@ cudnn.benchmark = True
 
 class VideoTracker(object):
     def __init__(self, args):
-        print('Initialize DeepSORT & YOLO-V5')
+        print('Initialize DeepSORT & Facenet')
         # ***************** Initialize ******************************************************
         self.args = args
         self.scale = args.scale                         # 2
@@ -59,7 +59,7 @@ class VideoTracker(object):
         self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
 
         # ***************************** initialize Face Det **********************************
-        self.face_detector = MTCNN(keep_all=True, device=self.device)
+        self.face_detector = MTCNN(keep_all=True, min_face_size= 45, device=self.device)
 
         print('Done..')
         if self.device == 'cpu':
@@ -81,7 +81,7 @@ class VideoTracker(object):
             self.im_height = int(self.vdo.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         # ************************* Load video from file *************************
-        else:
+        else:                                               
             assert os.path.isfile(self.args.input_path), "Path error"
             self.vdo.open(self.args.input_path)
             self.im_width = int(self.vdo.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -124,18 +124,26 @@ class VideoTracker(object):
 
         idx_frame = 0
         last_out = None
-        while self.vdo.grab():
+        while True:
             # Inference *********************************************************************
             t0 = time.time()
-            _, img0 = self.vdo.retrieve()
+            ret2, img0 = self.vdo.read()
             # img0 = cv2.imread("saved/M. Abdullah/0e719f58-08f6-44df-bfe8-462b016c3e67.jpg")
+
+            if not ret2:
+                print("Warning: Received an empty frame.")
+                self.vdo = cv2.VideoCapture(self.args.cam)
+                if not self.vdo.isOpened():
+                    print("Error: Could not open video stream or file.")
+                continue  # you might want to break here depending on your use case
+
             if idx_frame % self.args.frame_interval == 0:
                 outputs, yt, st, name = self.image_track(img0)        # (#ID, 5) x1,y1,x2,y2,id
                 last_out = outputs
                 
                 yolo_time.append(yt)
                 sort_time.append(st)
-                print('Frame %d Done. Det-time:(%.3fs) SORT-time:(%.3fs)' % (idx_frame, yt, st))
+                #print('Frame %d Done. Det-time:(%.3fs) SORT-time:(%.3fs)' % (idx_frame, yt, st))
             else:
                 outputs = last_out  # directly use prediction in last frames
             t1 = time.time()
@@ -149,7 +157,7 @@ class VideoTracker(object):
                 emp_ids = name
                 img0 = draw_boxes(img0, bbox_xyxy, emp_ids, identities)  # BGR
 
-                # add FPS information on output video
+                ### add FPS information on output video
                 text_scale = max(1, img0.shape[1] // 1600)
                 cv2.putText(img0, 'frame: %d fps: %.2f ' % (idx_frame, len(avg_fps) / sum(avg_fps)),
                         (20, 20 + text_scale), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255), thickness=2)
@@ -214,7 +222,7 @@ class VideoTracker(object):
         else:
             outputs = torch.zeros((0, 5))
             name = ""
-
+        
         t3 = time.time()
         return outputs, t2-t1, t3-t2 , name
 
@@ -232,13 +240,13 @@ def xyxy2xywh(x):
 if __name__ == '__main__':
 
     VIDEO_PATH =  "-1"
-    VIDEO_PATH = "rtsp://admin:JGPHAN@192.168.0.104:554"
-    TRAINING_FILE = 'data.pt'
-    # TRAINING_FILE = None
+    VIDEO_PATH = "rtsp://admin:JGPHAN@192.168.18.75:554"
+    TRAINING_FILE = '/home/transdata/attendance_deepsort/data.pt'
+    TRAINING_FILE = None
     parser = argparse.ArgumentParser()
     # input and output
     parser.add_argument('--input_path', type=str, default='test3.mp4', help='source')  # file/folder, 0 for webcam
-    parser.add_argument('--save_path', type=str, default='output/', help='output folder')  # output folder
+    parser.add_argument('--save_path', type=str, default='/home/transdata/attendance_deepsort/output', help='output folder')  # output folder
     parser.add_argument("--frame_interval", type=int, default=1)
     parser.add_argument('--fourcc', type=str, default='mp4v', help='output video codec (verify ffmpeg support)')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
@@ -254,10 +262,10 @@ if __name__ == '__main__':
     # face detecot parameters
     parser.add_argument("--scale", type=int, default=2)
     parser.add_argument("--margin_ratio", type=int, default=0.2)
-    parser.add_argument("--face_database", type=str, default="data.pt")
+    parser.add_argument("--face_database", type=str, default="/home/transdata/attendance_deepsort/data.pt")
 
     # deepsort parameters
-    parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
+    parser.add_argument("--config_deepsort", type=str, default="/home/transdata/attendance_deepsort/configs/deep_sort.yaml")
 
     # Train face data
     parser.add_argument("--training", type=str, default=TRAINING_FILE)

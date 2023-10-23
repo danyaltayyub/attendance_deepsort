@@ -2,6 +2,7 @@ import cv2
 import torch
 import numpy as np
 from os import listdir
+# from deep_sort.deep_sort_face import DeepSortFace
 
 
 class Training():
@@ -15,7 +16,7 @@ class Training():
     def initiate_training(self):
         name_list = [] # list of names corrospoing to cropped photos
         embedding_list = [] # list of embeding matrix after conversion from cropped faces to embedding matrix using resnet
-        database = "./saved/"
+        database = "/home/transdata/attendance_deepsort/saved"
         embedding_list = []
         name_list = []
 
@@ -51,7 +52,7 @@ class Training():
 
 
         data = [embedding_list,name_list]
-        torch.save(data, 'data.pt') # saving data.pt file
+        torch.save(data, '/home/transdata/attendance_deepsort/data.pt') # saving data.pt file
         print("\n✔ Training done.")
         print(f"✔ Total Persons in our Dataset: {len(name_list)}")
         for p in name_list:

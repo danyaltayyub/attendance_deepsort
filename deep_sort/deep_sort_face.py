@@ -76,7 +76,9 @@ class DeepSortFace(object):
             box = track.to_tlwh()  # (xc,yc,a,h) to (x1,y1,w,h)
             x1, y1, x2, y2 = self._tlwh_to_xyxy(box)
             track_names.append(track.track_name)
-            # record_att.store_attendance(track.track_name)
+            if track.track_name is not "Undetected":
+                print("Attendance Marked: ", track.track_name)
+            record_att.store_attendance(track.track_name)
 
 
             track_id = track.track_id

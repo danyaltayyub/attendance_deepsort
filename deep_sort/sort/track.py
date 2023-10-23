@@ -165,7 +165,7 @@ class Track:
             new_name = []
 
             for idx, emb_db in enumerate(self.face_data):
-                dist = _cosine_distance(emb_db.reshape(1,-1), detection.feature.reshape(1,-1) )[0][0]
+                dist = _cosine_distance(emb_db[0].reshape(1,-1), detection.feature.reshape(1,-1) )[0][0]
                 dist = round(dist,3)
                 # print("new nameeeeeeee.....",len(new_name))
                 check = True
@@ -190,8 +190,8 @@ class Track:
                 # print (self.name_list[idx], dist)
                 # print(self.matching_conf)
 
-            for idx , names in enumerate(new_name):
-                print(new_name[idx], dist_list[idx])
+            # for idx , names in enumerate(new_name):
+            #     print(new_name[idx], dist_list[idx])
             idx_min=dist_list.index(min(dist_list))
 
             if dist_list[idx_min] <= self.matching_conf:
@@ -200,7 +200,7 @@ class Track:
                     self.temp_name = new_name[idx_min]
                 else:
                     self.name_update+=1
-                    if self.name_update >= 4:
+                    if self.name_update >= 3:
                         self.track_name = self.temp_name
                         self.name_update = 0
 
